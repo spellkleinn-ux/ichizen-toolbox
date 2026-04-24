@@ -1,142 +1,16 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { useToolBySlug } from '../hooks/useTools'
-import { supabase } from '../lib/supabase'
-
-// Fingerprint simple basé sur le navigateur (pas de tracking personnel)
-function getFingerprint() {
-  const key = 'tbx_fp'
-  let fp = localStorage.getItem(key)
-  if (!fp) {
-    fp = Math.random().toString(36).slice(2) + Date.now().toString(36)
-    localStorage.setItem(key, fp)
-  }
-  return fp
-}
-
-const CATEGORY_EMOJIS = {
-  'IA': '✦', 'Productivité': '◆', 'Design': '❖',
-  'Santé': '⊕', 'Finance': '◎', 'Dev': '⌥', 'Autre': '◉',
-}
-
-export default function ToolDetail() {
-  const { slug } = useParams()
-  const { tool, loading, error } = useToolBySlug(slug)
-  const [votes, setVotes] = useState(null)
-  const [voted, setVoted] = useState(false)
-  const [voting, setVoting] = useState(false)
-
-  // Init votes and check if already voted
-  useEffect(() => {
-    if (!tool) return
-    setVotes(tool.votes)
-    const fingerprint = getFingerprint()
-    supabase
-      .from('votes')
-      .select('id')
-      .eq('tool_id', tool.id)
-      .eq('fingerprint', fingerprint)
-      .maybeSingle()
-      .then(({ data }) => { if (data) setVoted(true) })
-  }, [tool])
-
-  const handleVote = async () => {
-    if (voted || voting || !tool) return
-    setVoting(true)
-    const fingerprint = getFingerprint()
-
-    const { error: voteErr } = await supabase
-      .from('votes')
-      .insert({ tool_id: tool.id, fingerprint })
-
-    if (!voteErr) {
-      // Incrémenter le compteur côté outil
-      await supabase
-        .from('tools')
-        .update({ votes: (votes ?? 0) + 1 })
-        .eq('id', tool.id)
-
-      setVotes(v => v + 1)
-      setVoted(true)
-    }
-    setVoting(false)
-  }
-
-  if (loading) return (
-    <div className="container" style={{ paddingTop: 64 }}>
-      <div className="skeleton" style={{ height: 24, width: 120, marginBottom: 40 }} />
-      <div style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
-        <div className="skeleton" style={{ width: 72, height: 72, borderRadius: 16, flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div className="skeleton" style={{ height: 28, width: '40%', marginBottom: 12 }} />
-          <div className="skeleton" style={{ height: 16, width: '60%' }} />
-        </div>
-      </div>
-      <div className="skeleton" style={{ height: 80, width: '100%' }} />
-    </div>
-  )
-
-  if (error || !tool) return (
-    <div className="container" style={{ paddingTop: 64, textAlign: 'center' }}>
-      <p style={{ color: 'var(--muted)' }}>Outil introuvable.</p>
-      <Link to="/" className="detail-back" style={{ justifyContent: 'center', marginTop: 16 }}>← Retour à l'accueil</Link>
-    </div>
-  )
-
-  const emoji = CATEGORY_EMOJIS[tool.category] ?? '◉'
-  const catClass = `cat-${tool.category.replace(/\s/g, '')}`
-
-  return (
-    <main className="container" style={{ paddingTop: 48, paddingBottom: 80 }}>
-      <Link to="/" className="detail-back">← Retour</Link>
-
-      <div className="detail-hero">
-        <div className="detail-logo">
-          {tool.logo_url
-            ? <img src={tool.logo_url} alt={tool.name} />
-            : <span>{emoji}</span>
-          }
-        </div>
-        <div className="detail-info">
-          <h1>{tool.name}</h1>
-          <div className="detail-meta">
-            <span className={`cat-badge ${catClass}`}>{tool.category}</span>
-            {tool.tags?.map(tag => (
-              <span key={tag} className="tag">{tag}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <p className="detail-desc">{tool.long_desc || tool.description}</p>
-
-      <div className="detail-actions">
-        <a
-          href={tool.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary"
-        >
-          Visiter le site ↗
-        </a>
-
-        <button
-          className={`btn btn-vote${voted ? ' voted' : ''}`}
-          onClick={handleVote}
-          disabled={voted || voting}
-        >
-          {voted ? '✓ Voté' : voting ? '…' : `▲ Voter · ${votes ?? tool.votes}`}
-        </button>
-      </div>
-
-      {tool.tags?.length > 0 && (
-        <div className="tags-row" style={{ marginTop: 40 }}>
-          <span style={{ fontSize: 13, color: 'var(--muted)', marginRight: 4 }}>Tags :</span>
-          {tool.tags.map(tag => (
-            <Link key={tag} to={`/?search=${tag}`} className="tag">{tag}</Link>
-          ))}
-        </div>
-      )}
-    </main>
-  )
-}
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Toolbox — Le meilleur annuaire d'outils en ligne, gratuit et communautaire." />
+    <title>Toolbox — Annuaire d'outils</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
