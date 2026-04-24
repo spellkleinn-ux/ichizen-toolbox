@@ -1,0 +1,147 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+
+const CATEGORIES = ['IA', 'Productivité', 'Design', 'Santé', 'Finance', 'Dev', 'Autre']
+
+export default function Submit() {
+  const [form, setForm] = useState({
+    name: '',
+    url: '',
+    category: '',
+    description: '',
+    submitter_email: '',
+  })
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState(null)
+
+  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.name || !form.url || !form.category || !form.description) {
+      setError('Merci de remplir tous les champs obligatoires.')
+      return
+    }
+
+    // Normalize URL
+    let url = form.url.trim()
+    if (!url.startsWith('http')) url = 'https://' + url
+
+    setLoading(true)
+    setError(null)
+
+    const { error: err } = await supabase
+      .from('submissions')
+      .insert({
+        name: form.name.trim(),
+        url,
+        category: form.category,
+        description: form.description.trim(),
+        submitter_email: form.submitter_email.trim() || null,
+      })
+
+    if (err) {
+      setError('Une erreur est survenue. Réessaie.')
+    } else {
+      setSuccess(true)
+    }
+    setLoading(false)
+  }
+
+  if (success) return (
+    <div className="container">
+      <div className="form-page">
+        <div className="success-box">
+          <h2>Merci pour ta soumission !</h2>
+          <p>L'outil sera examiné et publié sous 24–48h si il correspond aux critères.</p>
+          <Link to="/" className="btn btn-primary" style={{ marginTop: 20, display: 'inline-flex' }}>
+            ← Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="container">
+      <div className="form-page">
+        <h1>Soumettre un outil</h1>
+        <p className="subtitle">
+          Tu connais un outil génial qui n'est pas encore répertorié ?<br />
+          Soumets-le, la communauté te remerciera.
+        </p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Nom de l'outil *</label>
+              <input
+                type="text"
+                placeholder="ex: Notion"
+                value={form.name}
+                onChange={set('name')}
+                maxLength={80}
+              />
+            </div>
+            <div className="form-group">
+              <label>Catégorie *</label>
+              <select value={form.category} onChange={set('category')}>
+                <option value="">Choisir…</option>
+                {CATEGORIES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>URL *</label>
+            <input
+              type="text"
+              placeholder="https://exemple.com"
+              value={form.url}
+              onChange={set('url')}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Description courte *</label>
+            <textarea
+              placeholder="En 1-2 phrases, à quoi ça sert ?"
+              value={form.description}
+              onChange={set('description')}
+              rows={3}
+              maxLength={280}
+            />
+            <small>{form.description.length}/280 caractères</small>
+          </div>
+
+          <div className="form-group">
+            <label>Ton email <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
+            <input
+              type="email"
+              placeholder="pour être notifié si l'outil est publié"
+              value={form.submitter_email}
+              onChange={set('submitter_email')}
+            />
+          </div>
+
+          {error && (
+            <p style={{ color: '#a32d2d', fontSize: 14, marginBottom: 16 }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+            style={{ width: '100%', justifyContent: 'center', padding: '13px 20px', fontSize: 15 }}
+          >
+            {loading ? 'Envoi en cours…' : 'Soumettre l\'outil →'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
