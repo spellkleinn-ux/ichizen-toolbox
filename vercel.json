@@ -1,79 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Remplace ces valeurs par celles de ton projet Supabase
-// Dashboard → Settings → API
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-/*
-  ── SCHÉMA À CRÉER DANS SUPABASE (SQL Editor) ──────────────────────────────
-
-  -- Table principale des outils
-  CREATE TABLE tools (
-    id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    name        text NOT NULL,
-    slug        text UNIQUE NOT NULL,
-    description text NOT NULL,
-    long_desc   text,
-    url         text NOT NULL,
-    category    text NOT NULL,
-    tags        text[] DEFAULT '{}',
-    logo_url    text,
-    votes       integer DEFAULT 0,
-    approved    boolean DEFAULT false,
-    created_at  timestamptz DEFAULT now()
-  );
-
-  -- Table des votes (1 vote par IP/session)
-  CREATE TABLE votes (
-    id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    tool_id    uuid REFERENCES tools(id) ON DELETE CASCADE,
-    fingerprint text NOT NULL,
-    created_at  timestamptz DEFAULT now(),
-    UNIQUE(tool_id, fingerprint)
-  );
-
-  -- Table des soumissions en attente
-  CREATE TABLE submissions (
-    id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    name        text NOT NULL,
-    url         text NOT NULL,
-    category    text NOT NULL,
-    description text NOT NULL,
-    submitter_email text,
-    status      text DEFAULT 'pending',
-    created_at  timestamptz DEFAULT now()
-  );
-
-  -- RLS : lecture publique des outils approuvés
-  ALTER TABLE tools ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "public read approved" ON tools FOR SELECT USING (approved = true);
-
-  -- RLS : tout le monde peut voter
-  ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "public insert votes" ON votes FOR INSERT WITH CHECK (true);
-  CREATE POLICY "public read votes"   ON votes FOR SELECT USING (true);
-
-  -- RLS : tout le monde peut soumettre
-  ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "public insert submissions" ON submissions FOR INSERT WITH CHECK (true);
-
-  -- Données de démo (à adapter)
-  INSERT INTO tools (name, slug, description, url, category, tags, votes, approved) VALUES
-    ('ChatGPT',    'chatgpt',    'Assistant IA pour rédiger, coder et analyser.',          'https://chat.openai.com',      'IA',            '{"IA","chatbot","rédaction"}',   120, true),
-    ('Perplexity', 'perplexity', 'Moteur de recherche augmenté par l''IA.',                 'https://perplexity.ai',        'IA',            '{"IA","recherche"}',             88,  true),
-    ('Notion',     'notion',     'Workspace tout-en-un pour notes et projets.',             'https://notion.so',            'Productivité',  '{"notes","projets","wiki"}',     104, true),
-    ('Obsidian',   'obsidian',   'Prise de notes liées avec graphe de connaissances.',      'https://obsidian.md',          'Productivité',  '{"notes","PKM"}',                67,  true),
-    ('Figma',      'figma',      'Design UI/UX collaboratif dans le navigateur.',           'https://figma.com',            'Design',        '{"design","UI","collaboration"}', 95, true),
-    ('Canva',      'canva',      'Créer des visuels sans compétences graphiques.',          'https://canva.com',            'Design',        '{"design","visuels"}',           112, true),
-    ('PubMed',     'pubmed',     'Base de données médicale et scientifique mondiale.',      'https://pubmed.ncbi.nlm.nih.gov','Santé',       '{"médecine","recherche","science"}',54,true),
-    ('Anki',       'anki',       'Système de révision par répétition espacée.',             'https://apps.ankiweb.net',     'Santé',         '{"révision","mémorisation"}',    78,  true),
-    ('YNAB',       'ynab',       'Gestion budgétaire avancée pour reprendre le contrôle.', 'https://ynab.com',             'Finance',       '{"budget","finance"}',           43,  true),
-    ('Gamma',      'gamma',      'Créer des présentations avec l''IA en quelques secondes.','https://gamma.app',           'Productivité',  '{"IA","présentations"}',         61,  true),
-    ('Excalidraw', 'excalidraw', 'Tableau blanc collaboratif et open-source.',              'https://excalidraw.com',       'Design',        '{"schémas","collaboration"}',    56,  true),
-    ('Linear',     'linear',     'Gestion de projets pour équipes modernes.',               'https://linear.app',           'Productivité',  '{"projets","équipe"}',           49,  true);
-
-  ─────────────────────────────────────────────────────────────────────────────
-*/
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
